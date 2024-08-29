@@ -53,8 +53,11 @@ if st.button("Send"):
 
         # Try to extract and format the response
         try:
-            # Assuming the response might be a dictionary with a 'choices' key
-            assistant_message_content = chat_response.get('choices', [{}])[0].get('message', {}).get('content', '')
+            # Extract content based on the response attributes
+            if hasattr(chat_response, 'choices') and len(chat_response.choices) > 0:
+                assistant_message_content = chat_response.choices[0].message.content
+            else:
+                assistant_message_content = "No valid response received."
         except Exception as e:
             st.error(f"Error extracting message content: {e}")
             assistant_message_content = "An error occurred while processing the response."
