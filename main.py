@@ -51,10 +51,11 @@ if st.button("Send"):
         # Debugging: Output the entire response to understand its structure
         st.write("Chat Response:", chat_response)
 
-        # Try to extract and format the response
+        # Extract and format the response
         try:
-            # Extract content based on the response attributes
+            # Check if 'choices' is an attribute and process accordingly
             if hasattr(chat_response, 'choices') and len(chat_response.choices) > 0:
+                # Extract message content
                 assistant_message_content = chat_response.choices[0].message.content
             else:
                 assistant_message_content = "No valid response received."
