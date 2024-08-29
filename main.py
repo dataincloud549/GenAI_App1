@@ -12,8 +12,7 @@ api_key = os.getenv("GROQ_API_KEY")
 
 # Set up the Streamlit app
 # Add a banner image
-banner_image_url = "banner_image.JPG"
- # Replace with your actual image URL or local path
+banner_image_url = "banner_image.JPG"  # Replace with your actual image URL or local path
 st.image(banner_image_url, use_column_width=True)
 
 st.title("Gen AI Q&A with Groq LLM")
@@ -27,31 +26,36 @@ if not api_key:
 # Initialize the LLM
 llm = Groq(model="llama3-70b-8192", api_key=api_key)
 
-# System message to guide the LLM's behavior
-system_message = ChatMessage(
-    role="system",
-    content=(
-        "You are an AI instructor specialized in Generative AI. "
-        "You should only answer questions related to Generative AI, "
-        "such as GPT models, transformers, neural networks, AI ethics, "
-        "and applications of AI in creativity and research. If a user "
-        "asks a question that is not related to Generative AI, kindly inform "
-        "them that you can only answer Generative AI-related questions."
-    )
-)
+# Initialize session state to store messages
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# Basic completion example
-st.subheader("Ask a Question about Generative AI")
+# Display chat history
+for index, message in enumerate(st.session_state.messages):
+    if message.role == "user":
+        st.text_area("User", value=message.content, height=50, max_chars=None, key=f"user_{index}", disabled=True)
+    elif message.role == "assistant":
+        st.text_area("Assistant", value=message.content, height=50, max_chars=None, key=f"assistant_{index}", disabled=True)
+
+# Input for new question
 question = st.text_input("Enter your question:")
-if st.button("Get Answer"):
+if st.button("Send"):
     if question:
-        # Build the messages list including the system message
-        messages = [system_message, ChatMessage(role="user", content=question)]
-        
+        # Add user's question to the session state
+        user_message = ChatMessage(role="user", content=question)
+        st.session_state.messages.append(user_message)
+
         # Get the response from the LLM
-        response = llm.chat(messages)
-        
-        # Display the response
-        st.write(response)
+        chat_response = llm.chat(st.session_state.messages)
+
+        # Extract and format the response
+        assistant_message_content = chat_response.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+        # Add LLM's response to the session state
+        ai_message = ChatMessage(role="assistant", content=assistant_message_content)
+        st.session_state.messages.append(ai_message)
+
+        # Display the new response
+        st.text_area("Assistant", value=assistant_message_content, height=50, max_chars=None, key=f"assistant_{len(st.session_state.messages)}", disabled=True)
     else:
         st.warning("Please enter a question.")
