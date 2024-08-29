@@ -48,8 +48,16 @@ if st.button("Send"):
         # Get the response from the LLM
         chat_response = llm.chat(st.session_state.messages)
 
-        # Extract and format the response
-        assistant_message_content = chat_response.get("choices", [{}])[0].get("message", {}).get("content", "")
+        # Debugging: Output the entire response to understand its structure
+        st.write("Chat Response:", chat_response)
+
+        # Try to extract and format the response
+        try:
+            # Assuming the response might be a dictionary with a 'choices' key
+            assistant_message_content = chat_response.get('choices', [{}])[0].get('message', {}).get('content', '')
+        except Exception as e:
+            st.error(f"Error extracting message content: {e}")
+            assistant_message_content = "An error occurred while processing the response."
 
         # Add LLM's response to the session state
         ai_message = ChatMessage(role="assistant", content=assistant_message_content)
