@@ -49,7 +49,7 @@ if st.button("Send"):
         chat_response = llm.chat(st.session_state.messages)
 
         # Debugging: Output the entire response to understand its structure
-        st.write("Chat Response:", chat_response)
+        st.write("Chat Response:", chat_response.choices[0].message.content)
 
         # Extract and format the response
         try:
