@@ -1,73 +1,90 @@
 import streamlit as st
-from llama_index.llms.groq import Groq
-from llama_index.core.llms import ChatMessage
-from dotenv import load_dotenv
+from groq import Groq
 import os
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Fetch the API key from the environment
-api_key = os.getenv("GROQ_API_KEY")
+# Initialize the Groq client
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+client = Groq(api_key=GROQ_API_KEY)
+MODEL = 'llama3-70b-8192'
 
-# Set up the Streamlit app
-# Add a banner image
+# Store conversation history
+conversation = [
+    {
+        "role": "system",
+        "content": "You are a chat bot designed only to answer questions about cricketer Sachin Tendulkar. You do not know anything else. If someone asks questions on topics apart from Sachin Tendulkar, just say you don't know."
+    }
+]
+
+def get_groq_response(question):
+    global conversation
+    messages = conversation + [
+        {
+            "role": "user",
+            "content": question,
+        }
+    ]
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=messages,
+        max_tokens=4096
+    )
+
+    conversation.append({
+        "role": "assistant",
+        "content": response.choices[0].message.content
+    })
+
+    return response.choices[0].message.content
+
 banner_image_url = "banner_image.JPG"  # Replace with your actual image URL or local path
 st.image(banner_image_url, use_column_width=True)
 
 st.title("Gen AI Q&A with Groq LLM")
 st.write("This application uses the Groq LLM to answer questions related to Generative AI.")
 
-# Check if the API key is available
-if not api_key:
-    st.warning("API key not found. Please ensure it is set in the .env file.")
-    st.stop()
 
-# Initialize the LLM
-llm = Groq(model="llama3-70b-8192", api_key=api_key)
 
-# Initialize session state to store messages
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# Chat interface
+if 'conversation' not in st.session_state:
+    st.session_state.conversation = []
 
-# Display chat history
-for index, message in enumerate(st.session_state.messages):
-    if message.role == "user":
-        st.text_area("User", value=message.content, height=50, max_chars=None, key=f"user_{index}", disabled=True)
-    elif message.role == "assistant":
-        st.text_area("Assistant", value=message.content, height=50, max_chars=None, key=f"assistant_{index}", disabled=True)
-
-# Input for new question
-question = st.text_input("Enter your question:")
-if st.button("Send"):
+def send_message():
+    question = input_box
     if question:
-        # Add user's question to the session state
-        user_message = ChatMessage(role="user", content=question)
-        st.session_state.messages.append(user_message)
+        st.session_state.conversation.append({"role": "user", "content": question})
+        response = get_groq_response(question)
+        st.session_state.conversation.append({"role": "assistant", "content": response})
 
-        # Get the response from the LLM
-        chat_response = llm.chat(st.session_state.messages)
+# Input box for user query
+input_box = st.text_input("Enter your query about GenAI:")
 
-        # Debugging: Output the entire response to understand its structure
-        #st.write("Chat Response:", chat_response.choices[0].message.content)
+# Button to get response
+if st.button("Send"):
+    send_message()
 
-        # Extract and format the response
-        try:
-            # Check if 'choices' is an attribute and process accordingly
-            if hasattr(chat_response, 'choices') and len(chat_response.choices) > 0:
-                # Extract message content
-                assistant_message_content = chat_response.choices[0].message.content
-            else:
-                assistant_message_content = "No valid response received."
-        except Exception as e:
-            st.error(f"Error extracting message content: {e}")
-            assistant_message_content = "An error occurred while processing the response."
-
-        # Add LLM's response to the session state
-        ai_message = ChatMessage(role="assistant", content=assistant_message_content)
-        st.session_state.messages.append(ai_message)
-
-        # Display the new response
-        st.text_area("Assistant", value=assistant_message_content, height=50, max_chars=None, key=f"assistant_{len(st.session_state.messages)}", disabled=True)
+# Display conversation
+user_profile_pic = "system.PNG"
+assistant_profile_pic = "user.PNG"
+for message in st.session_state.conversation:
+    if message["role"] == "system":
+        st.image(assistant_profile_pic, width=30, output_format='PNG')
+        st.markdown(f"**System:** {message['content']}")
+    elif message["role"] == "user":
+        st.image(user_profile_pic, width=30, output_format='PNG')
+        st.markdown(f"**You:** {message['content']}")
     else:
-        st.warning("Please enter a question.")
+        st.image(assistant_profile_pic, width=30, output_format='PNG')
+        st.markdown(f"**Assistant:** {message['content']}")
+
+# Additional Streamlit widgets for beautification
+#st.sidebar.header("Sachin Tendulkar App")
+#st.sidebar.markdown('<div class="sidebar-text">This app allows you to ask questions about the legendary cricketer Sachin Tendulkar. Feel free to explore and learn more about his career and achievements!</div>', unsafe_allow_html=True)
+
+# Add a footer
+st.markdown("---")
+st.markdown("Made by Srikanth")
