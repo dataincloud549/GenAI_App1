@@ -15,7 +15,14 @@ MODEL = 'llama3-70b-8192'
 conversation = [
     {
         "role": "system",
-        "content": "You are a chat bot designed only to answer questions about cricketer Sachin Tendulkar. You do not know anything else. If someone asks questions on topics apart from Sachin Tendulkar, just say you don't know."
+        "content": (
+        "You are an AI instructor specialized in Generative AI. "
+        "You should only answer questions related to Generative AI, "
+        "such as GPT models, transformers, neural networks, AI ethics, "
+        "and applications of AI in creativity and research. If a user "
+        "asks a question that is not related to Generative AI, kindly inform "
+        "them that you can only answer Generative AI-related questions."
+    )
     }
 ]
 
